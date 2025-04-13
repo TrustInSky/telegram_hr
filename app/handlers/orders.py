@@ -1,15 +1,15 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
-from app.services.catalog import CatalogService
-from app.services.order import OrderService
+from app.services.catalog_service import CatalogService
+from app.services.order_service import OrderService
 from app.repositories.order_repo import OrderRepo
-from app.services.user import UserService
+from app.services.user_service import UserService
 from app.repositories.user_repo import UserRepo
-from app.keyboards.catalog import buy_product_keyboard
+from app.keyboards.catalog_keyboard import buy_product_keyboard
 from app.database.models import Product
 from app.utils.message_editor import update_message
 from aiogram.enums.parse_mode import ParseMode
-from app.keyboards.order_manage import order_management_keyboard,order_manage_back
+from app.keyboards.order_manage_keyboard import order_management_keyboard,order_manage_back
 
 from app.decorator.injectors import inject_services
 

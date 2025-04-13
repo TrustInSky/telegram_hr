@@ -1,12 +1,12 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery,Message
 from app.repositories.user_repo import UserRepo
-from app.services.catalog import CatalogService
+from app.services.catalog_service import CatalogService
 from app.keyboards.main_menu_keyboard import user_main_menu,back_to_main_menu
 from app.utils.message_editor import update_message
 from aiogram.filters import Command
 from app.repositories.user_repo import UserRepo
-from app.services.catalog import CatalogService
+from app.services.catalog_service import CatalogService
 from app.decorator.injectors import inject_services
 
 

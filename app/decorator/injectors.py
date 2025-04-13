@@ -4,9 +4,9 @@ from app.repositories.catalog_repo import CatalogRepo
 from app.repositories.user_repo import UserRepo
 from app.repositories.order_repo import OrderRepo
 from app.repositories.anon_question_repo import AnonymousQuestionRepo
-from app.services.catalog import CatalogService
-from app.services.user import UserService
-from app.services.order import OrderService
+from app.services.catalog_service import CatalogService
+from app.services.user_service import UserService
+from app.services.order_service import OrderService
 from app.services.question_service import AnonymousQuestionService
 from app.database.database import SessionLocal
 

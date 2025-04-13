@@ -1,7 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, InputMediaPhoto
-from app.keyboards.catalog import catalog_keyboard, buy_product_keyboard, format_product_description, buy_or_select_keyboard
-from app.services.catalog import CatalogService
+from app.keyboards.catalog_keyboard import catalog_keyboard, buy_product_keyboard, format_product_description, buy_or_select_keyboard
+from app.services.catalog_service import CatalogService
 from app.utils.message_editor import update_message
 from app.decorator.injectors import inject_services
 

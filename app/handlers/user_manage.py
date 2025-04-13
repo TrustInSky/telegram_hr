@@ -3,8 +3,8 @@ from aiogram.types import CallbackQuery, Message, FSInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import StateFilter
 from aiogram.fsm.state import State, StatesGroup
-from app.keyboards.user_manage_menu import hr_user_management_keyboard
-from app.services.user import UserService
+from app.keyboards.user_manage_menu_keyboard import hr_user_management_keyboard
+from app.services.user_service import UserService
 from app.utils.exel import parse_excel_file
 from app.decorator.injectors import inject_services
 from app.utils.message_editor import update_message

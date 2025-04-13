@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 from aiogram.filters import StateFilter
-from app.keyboards.anonymous_question import anon_questions_menu_keyboard,mark_status_keyboard,anon_questions_menu_keyboard,confirm_question_keyboard
+from app.keyboards.anonymous_question_keyboard import anon_questions_menu_keyboard,mark_status_keyboard,anon_questions_menu_keyboard,confirm_question_keyboard
 from app.keyboards.main_menu_keyboard import user_main_menu
 from app.states.states import AnonymousQuestionStates
 from app.repositories.anon_question_repo import AnonymousQuestionRepo

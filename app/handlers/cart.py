@@ -3,7 +3,7 @@ from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 
 from app.services.cart_service import CartService
-from app.services.catalog import CatalogService
+from app.services.catalog_service import CatalogService
 from app.decorator.injectors import inject_services
 from app.keyboards.cart_keyboard import (
     get_cart_keyboard,

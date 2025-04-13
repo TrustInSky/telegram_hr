@@ -1,5 +1,5 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from app.database.models import Product
 
 
@@ -50,3 +50,33 @@ def format_product_description(product: Product) -> str:
 
     desc += f"\n💰 Стоимость: <b>{product.price} T-points</b>"
     return desc
+
+def catalog_paginator_kb(current_index: int, total_items: int, product_id: int):
+    builder = InlineKeyboardBuilder()
+    
+    # Кнопки навигации
+    if current_index > 0:
+        builder.add(InlineKeyboardButton(
+            text="⬅️ Предыдущий", 
+            callback_data=f"prev_product_{current_index-1}"
+        ))
+        
+    if current_index < total_items - 1:
+        builder.add(InlineKeyboardButton(
+            text="Следующий ➡️", 
+            callback_data=f"next_product_{current_index+1}"
+        ))
+    
+    # Кнопка добавления в корзину
+    builder.add(InlineKeyboardButton(
+        text="🛒 Добавить в корзину", 
+        callback_data=f"add_to_cart_{product_id}"
+    ))
+    
+    # Кнопка возврата
+    builder.add(InlineKeyboardButton(
+        text="🏪 В магазин", 
+        callback_data="back_to_shop"
+    ))
+    
+    return builder.adjust(2).as_markup()

@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.states.states import CatalogStates
 from app.keyboards.catalog_manage_keyboard import catalog_manage
 from app.keyboards.main_menu_keyboard import user_main_menu
-from app.services.catalog import CatalogService
+from app.services.catalog_service import CatalogService
 from app.decorator.injectors import inject_services
 
 catalog_manage_router = Router()

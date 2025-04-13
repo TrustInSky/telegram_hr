@@ -1,7 +1,7 @@
 from app.repositories.catalog_repo import CatalogRepo
 from aiogram.types import InlineKeyboardMarkup, InputMediaPhoto
 from app.database.models import CommonImage, Product
-from app.keyboards.catalog import catalog_keyboard
+from app.keyboards.catalog_keyboard import catalog_keyboard
 import os
 import pandas as pd
 from datetime import datetime
