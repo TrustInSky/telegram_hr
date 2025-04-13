@@ -33,7 +33,7 @@ class CatalogService:
         image = await self.get_image_by_name("catalog_menu")
 
         media = InputMediaPhoto(
-            media=image.url if image else "https://example.com/default_image.jpg",
+            media=image.image_url if image else "https://example.com/default_image.jpg",
             caption=(
                 "<b>Добро пожаловать в наш каталог!</b>\n\n"
                 "🎁 Здесь вы можете обменять свои T-поинты на классные подарки!\n"
@@ -47,77 +47,204 @@ class CatalogService:
         return media, keyboard
 
     async def create_catalog_excel(self) -> str:
-        """Create Excel file with product catalog data"""
+        """Create Excel file with product catalog data in Russian"""
         # Get all products from DB
         products = await self.list_products()
         
-        # Convert ORM objects to dictionaries for pandas
+        # Словарь соответствия английских и русских названий полей
+        field_mapping = {
+            'id': 'ID',
+            'name': 'Наименование товара',
+            'description': 'Описание',
+            'price': 'Цена (T-поинты)',
+            'image_url': 'URL изображения',
+            'is_available': 'Доступен (1-да, 0-нет)',
+            'stock': 'Остаток на складе',
+            'sizes': 'Доступные размеры',
+            'colors': 'Доступные цвета'
+        }
+        
+        # Словарь с описаниями полей и форматами
+        field_descriptions = {
+            'ID': 'Уникальный идентификатор товара (не изменять для существующих товаров)',
+            'Наименование товара': 'Название товара, обязательное поле',
+            'Описание': 'Подробное описание товара, может содержать HTML-разметку',
+            'Цена (T-поинты)': 'Стоимость товара в T-поинтах, целое число, обязательное поле',
+            'URL изображения': 'Ссылка на изображение товара, предпочтительно Google Drive',
+            'Доступен (1-да, 0-нет)': 'Флаг доступности товара: 1 - товар доступен для заказа, 0 - недоступен',
+            'Остаток на складе': 'Количество товара на складе, целое число',
+            'Доступные размеры': 'Список доступных размеров, через запятую (например: "S, M, L, XL")',
+            'Доступные цвета': 'Список доступных цветов, через запятую (например: "Красный, Синий, Черный")'
+        }
+        
+        # Convert ORM objects to dictionaries for pandas with Russian field names
         products_data = []
         for product in products:
             products_data.append({
-                'id': product.id,
-                'name': product.name,
-                'description': product.description,
-                'price': product.price,
-                'image_url': product.image_url,
-                'is_available': 1 if product.is_available else 0,
-                'sizes': product.sizes if product.sizes else "",
-                'colors': product.colors if product.colors else ""
+                field_mapping['id']: product.id,
+                field_mapping['name']: product.name,
+                field_mapping['description']: product.description,
+                field_mapping['price']: product.price,
+                field_mapping['image_url']: product.image_url,
+                field_mapping['is_available']: 1 if product.is_available else 0,
+                field_mapping['stock']: product.stock,
+                field_mapping['sizes']: product.sizes if product.sizes else "",
+                field_mapping['colors']: product.colors if product.colors else ""
             })
         
         # Create DataFrame
         df = pd.DataFrame(products_data)
+        
+        # Create description DataFrame
+        desc_data = []
+        for field, description in field_descriptions.items():
+            desc_data.append({
+                'Поле': field,
+                'Описание': description
+            })
+        df_desc = pd.DataFrame(desc_data)
         
         # Create filename with timestamp
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = os.path.join(self.excel_folder, f"catalog_{timestamp}.xlsx")
         
-        # Write to Excel
-        df.to_excel(filename, index=False)
+        # Write to Excel with column formatting
+        with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Каталог товаров')
+            df_desc.to_excel(writer, index=False, sheet_name='Инструкция')
+            
+            # Adjust column widths for catalog sheet
+            worksheet = writer.sheets['Каталог товаров']
+            for idx, col in enumerate(df.columns):
+                column_width = max(df[col].astype(str).map(len).max(), len(col)) + 2
+                worksheet.column_dimensions[chr(65 + idx)].width = min(column_width, 50)
+            
+            # Adjust column widths for description sheet
+            worksheet = writer.sheets['Инструкция']
+            worksheet.column_dimensions['A'].width = 30
+            worksheet.column_dimensions['B'].width = 100
         
         return filename
     
     async def create_catalog_excel_bytes(self) -> bytes:
-        """Create Excel file with product catalog data and return as bytes"""
+        """Create Excel file with product catalog data in Russian and return as bytes"""
         # Get all products from DB
         products = await self.list_products()
         
-        # Convert ORM objects to dictionaries for pandas
+        # Словарь соответствия английских и русских названий полей
+        field_mapping = {
+            'id': 'ID',
+            'name': 'Наименование товара',
+            'description': 'Описание',
+            'price': 'Цена (T-поинты)',
+            'image_url': 'URL изображения',
+            'is_available': 'Доступен (1-да, 0-нет)',
+            'stock': 'Остаток на складе',
+            'sizes': 'Доступные размеры',
+            'colors': 'Доступные цвета'
+        }
+        
+        # Словарь с описаниями полей и форматами
+        field_descriptions = {
+            'ID': 'Уникальный идентификатор товара (не изменять для существующих товаров)',
+            'Наименование товара': 'Название товара, обязательное поле',
+            'Описание': 'Подробное описание товара, может содержать HTML-разметку',
+            'Цена (T-поинты)': 'Стоимость товара в T-поинтах, целое число, обязательное поле',
+            'URL изображения': 'Ссылка на изображение товара, предпочтительно Google Drive',
+            'Доступен (1-да, 0-нет)': 'Флаг доступности товара: 1 - товар доступен для заказа, 0 - недоступен',
+            'Остаток на складе': 'Количество товара на складе, целое число',
+            'Доступные размеры': 'Список доступных размеров, через запятую (например: "S, M, L, XL")',
+            'Доступные цвета': 'Список доступных цветов, через запятую (например: "Красный, Синий, Черный")'
+        }
+        
+        # Convert ORM objects to dictionaries for pandas with Russian field names
         products_data = []
         for product in products:
             products_data.append({
-                'id': product.id,
-                'name': product.name,
-                'description': product.description,
-                'price': product.price,
-                'image_url': product.image_url,
-                'is_available': 1 if product.is_available else 0,
-                'sizes': product.sizes if product.sizes else "",
-                'colors': product.colors if product.colors else ""
+                field_mapping['id']: product.id,
+                field_mapping['name']: product.name,
+                field_mapping['description']: product.description,
+                field_mapping['price']: product.price,
+                field_mapping['image_url']: product.image_url,
+                field_mapping['is_available']: 1 if product.is_available else 0,
+                field_mapping['stock']: product.stock,
+                field_mapping['sizes']: product.sizes if product.sizes else "",
+                field_mapping['colors']: product.colors if product.colors else ""
             })
         
         # Create DataFrame
         df = pd.DataFrame(products_data)
         
+        # Create description DataFrame
+        desc_data = []
+        for field, description in field_descriptions.items():
+            desc_data.append({
+                'Поле': field,
+                'Описание': description
+            })
+        df_desc = pd.DataFrame(desc_data)
+        
         # Create Excel in memory
         output = BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Каталог товаров')
+            df_desc.to_excel(writer, index=False, sheet_name='Инструкция')
             
-            # Adjust column widths
+            # Adjust column widths for catalog sheet
             worksheet = writer.sheets['Каталог товаров']
             for idx, col in enumerate(df.columns):
                 column_width = max(df[col].astype(str).map(len).max(), len(col)) + 2
                 worksheet.column_dimensions[chr(65 + idx)].width = min(column_width, 50)
+            
+            # Adjust column widths for description sheet
+            worksheet = writer.sheets['Инструкция']
+            worksheet.column_dimensions['A'].width = 30
+            worksheet.column_dimensions['B'].width = 100
+            
+            # Add some basic styling
+            from openpyxl.styles import Font, PatternFill
+            
+            # Style the headers in both sheets
+            for sheet in [worksheet, writer.sheets['Каталог товаров']]:
+                for cell in sheet[1]:
+                    cell.font = Font(bold=True)
+                    cell.fill = PatternFill(start_color="DAEEF3", end_color="DAEEF3", fill_type="solid")
         
         output.seek(0)
         return output.getvalue()
 
     async def import_catalog_from_excel(self, file_path: str) -> dict:
-        """Process product import from Excel file"""
+        """Process product import from Excel file with Russian field names"""
         try:
             # Read Excel file
             df = pd.read_excel(file_path)
+            
+            # Словарь соответствия русских и английских названий полей
+            reverse_field_mapping = {
+                'ID': 'id',
+                'Наименование товара': 'name',
+                'Описание': 'description',
+                'Цена (T-поинты)': 'price',
+                'URL изображения': 'image_url',
+                'Доступен (1-да, 0-нет)': 'is_available',
+                'Остаток на складе': 'stock',
+                'Доступные размеры': 'sizes',
+                'Доступные цвета': 'colors'
+            }
+            
+            # Проверяем наличие необходимых столбцов
+            required_ru_fields = ['Наименование товара', 'Цена (T-поинты)']
+            missing_fields = [field for field in required_ru_fields if field not in df.columns]
+            
+            if missing_fields:
+                return {
+                    "success": False,
+                    "message": f"В Excel файле отсутствуют обязательные поля: {', '.join(missing_fields)}"
+                }
+            
+            # Переименовываем столбцы с русского на английский для обработки
+            column_mapping = {ru: en for ru, en in reverse_field_mapping.items() if ru in df.columns}
+            df = df.rename(columns=column_mapping)
             
             # Convert DataFrame to list of dictionaries
             raw_products_data = df.to_dict('records')
@@ -157,6 +284,7 @@ class CatalogService:
                     'price': product['price'],
                     'image_url': product['image_url'],
                     'is_available': product['is_available'],
+                    'stock': product.get('stock', 1),  # Добавлено поле stock с дефолтным значением 1
                     'sizes': product.get('sizes', ''),
                     'colors': product.get('colors', '')
                 })
@@ -178,8 +306,6 @@ class CatalogService:
         if isinstance(value, str):
             return value.strip().lower() in ['true', '1', 'yes', 'да', 'истина']
         return False
-        
-    import re
     
     def _extract_google_drive_image_url(self, url: str) -> str:
         """
@@ -221,4 +347,3 @@ class CatalogService:
         except Exception as e:
             print(f"[ERROR] Ошибка при обработке ссылки: {e}")
             return url
-    

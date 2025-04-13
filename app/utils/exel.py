@@ -10,25 +10,85 @@ from openpyxl.utils import get_column_letter
 from datetime import datetime
 from app.repositories.catalog_repo import CatalogRepo
 import re
+from openpyxl.styles import Font, PatternFill
 
 def user_create_excel_file(users: list[User]) -> bytes:
+    # Словарь соответствия английских и русских названий полей
+    field_mapping = {
+        "Full Name": "ФИО",
+        "Username": "Имя пользователя",
+        "Telegram ID": "ID Telegram",
+        "T-Points": "T-Points",
+        "Department": "Отдел",
+        "Post": "Должность",
+        "Birth Date": "Дата рождения",
+        "Hire Date": "Дата приема на работу",
+        "Active": "Активен (1-да, 0-нет)"
+    }
+    
+    # Словарь с описаниями полей и форматами
+    field_descriptions = {
+        "ФИО": "Полное имя сотрудника",
+        "Имя пользователя": "Имя пользователя в Telegram (без символа @)",
+        "ID Telegram": "Уникальный идентификатор Telegram пользователя (числовой)",
+        "T-Points": "Количество T-Points на балансе пользователя",
+        "Отдел": "Наименование отдела сотрудника",
+        "Должность": "Должность сотрудника",
+        "Дата рождения": "Дата рождения в формате ГГГГ-ММ-ДД",
+        "Дата приема на работу": "Дата приема на работу в формате ГГГГ-ММ-ДД",
+        "Активен (1-да, 0-нет)": "Флаг активности пользователя: 1 - активен, 0 - неактивен"
+    }
+
     data = [
         {
-            "Full Name": user.fullname,
-            "Username": user.username or "",
-            "Telegram ID": user.telegram_id,
-            "T-Points": user.tpoints,
-            "Department": user.department,
-            "Post": user.post,
-            "Birth Date": user.birth_date,
-            "Hire Date": user.hire_date,
-            "Active": int(user.is_active),
+            field_mapping["Full Name"]: user.fullname,
+            field_mapping["Username"]: user.username or "",
+            field_mapping["Telegram ID"]: user.telegram_id,
+            field_mapping["T-Points"]: user.tpoints,
+            field_mapping["Department"]: user.department or "",
+            field_mapping["Post"]: user.post or "",
+            field_mapping["Birth Date"]: user.birth_date,
+            field_mapping["Hire Date"]: user.hire_date,
+            field_mapping["Active"]: int(user.is_active),
         }
         for user in users
     ]
+    
     df = pd.DataFrame(data)
+    
+    # Create description DataFrame
+    desc_data = []
+    for field, description in field_descriptions.items():
+        desc_data.append({
+            'Поле': field,
+            'Описание': description
+        })
+    df_desc = pd.DataFrame(desc_data)
+    
     output = io.BytesIO()
-    df.to_excel(output, index=False)
+    
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='Пользователи')
+        df_desc.to_excel(writer, index=False, sheet_name='Инструкция')
+        
+        # Adjust column widths for users sheet
+        worksheet = writer.sheets['Пользователи']
+        for idx, col in enumerate(df.columns):
+            column_width = max(df[col].astype(str).map(len).max(), len(col)) + 2
+            worksheet.column_dimensions[get_column_letter(idx + 1)].width = min(column_width, 50)
+        
+        # Adjust column widths for description sheet
+        worksheet = writer.sheets['Инструкция']
+        worksheet.column_dimensions['A'].width = 30
+        worksheet.column_dimensions['B'].width = 100
+        
+        # Style the headers in both sheets
+        for sheet in [worksheet, writer.sheets['Пользователи']]:
+            for cell in sheet[1]:
+                cell.font = Font(bold=True)
+                cell.fill = PatternFill(start_color="DAEEF3", end_color="DAEEF3", fill_type="solid")
+    
+    output.seek(0)
     return output.getvalue()
 
 
@@ -42,8 +102,21 @@ async def parse_excel_file(file_path: str, db: AsyncSession) -> dict:
             
         print(f"Начинаем обработку файла: {file_path}")
         
+        # Словарь соответствия русских и английских названий полей
+        reverse_field_mapping = {
+            "ФИО": "Full Name",
+            "Имя пользователя": "Username",
+            "ID Telegram": "Telegram ID",
+            "T-Points": "T-Points",
+            "Отдел": "Department",
+            "Должность": "Post",
+            "Дата рождения": "Birth Date",
+            "Дата приема на работу": "Hire Date",
+            "Активен (1-да, 0-нет)": "Active"
+        }
+        
         # Читаем Excel с обработкой дат
-        df = pd.read_excel(file_path, parse_dates=["Birth Date", "Hire Date"])
+        df = pd.read_excel(file_path, parse_dates=["Дата рождения", "Дата приема на работу", "Birth Date", "Hire Date"])
         print(f"Файл успешно прочитан. Найдено {len(df)} записей")
         print(f"Columns: {df.columns.tolist()}")
         
@@ -51,13 +124,19 @@ async def parse_excel_file(file_path: str, db: AsyncSession) -> dict:
         print("Пример данных:")
         print(df.head(2))
         
+        # Переименовываем столбцы с русского на английский для обработки
+        rename_dict = {ru: en for ru, en in reverse_field_mapping.items() if ru in df.columns}
+        if rename_dict:
+            df = df.rename(columns=rename_dict)
+        
         # Проверяем наличие всех необходимых столбцов
-        required_columns = ["Full Name", "Telegram ID", "T-Points", 
-                            "Department", "Post", "Birth Date", "Hire Date", "Active"]
+        required_columns = ["Full Name", "Telegram ID"]
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
-            print(f"ОШИБКА: Отсутствуют столбцы: {', '.join(missing_columns)}")
-            return {"success": False, "message": f"Отсутствуют столбцы: {', '.join(missing_columns)}"}
+            # Переводим названия обратно на русский для понятной ошибки
+            missing_ru = [list(reverse_field_mapping.keys())[list(reverse_field_mapping.values()).index(col)] for col in missing_columns]
+            print(f"ОШИБКА: Отсутствуют столбцы: {', '.join(missing_ru)}")
+            return {"success": False, "message": f"Отсутствуют столбцы: {', '.join(missing_ru)}"}
         
         # Счетчики
         updated = 0
@@ -127,7 +206,6 @@ async def parse_excel_file(file_path: str, db: AsyncSession) -> dict:
         await db.rollback()  # Асинхронный метод rollback
         return {"success": False, "message": f"Ошибка при импорте: {str(e)}"}
     
-
 def anon_question_create_excel_file(questions: list[AnonymousQuestion]) -> bytes:
     data = []
     for question in questions:
