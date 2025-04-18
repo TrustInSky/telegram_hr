@@ -18,10 +18,10 @@ class OrderService:
         return await self.order_repo.create_order(user_id, product_id)
 
     async def complete_order(self, order_id: int):
-        return await self.order_repo.update_status(order_id, "completed")
+        return await self.order_repo.update_order_status(order_id, "completed")
 
     async def cancel_order(self, order_id: int):
-        return await self.order_repo.update_status(order_id, "cancelled")
+        return await self.order_repo.update_order_status(order_id, "cancelled")
 
     async def get_pending_orders(self):
         return await self.order_repo.get_pending_orders()
@@ -34,21 +34,6 @@ class OrderService:
             "by_departments": await self.order_repo.get_department_stats()
         }
         
-    async def get_catalog_keyboard(self, user_id: int, role: str) -> InlineKeyboardMarkup:
-        # Получаем все категории с помощью репозитория
-        categories = await self.catalog_repo.get_all_categories()
-
-        # Формируем клавиатуру для отображения категорий
-        keyboard = []
-        for category in categories:
-            # Добавляем кнопку для каждой категории
-            keyboard.append([InlineKeyboardButton(text=category.name, callback_data=f"view_category_{category.id}")])
-        
-        # Дополнительные кнопки на клавиатуре, если нужно
-        keyboard.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="back_to_main_menu")])
-
-        # Создаем и возвращаем клавиатуру
-        return InlineKeyboardMarkup(inline_keyboard=keyboard)
     
     async def get_orders_by_status(self, status: str):
         return await self.order_repo.get_orders_by_status(status)

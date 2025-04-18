@@ -75,15 +75,7 @@ async def download_catalog_handler(callback: CallbackQuery, state: FSMContext):
         "📥 <b>Загрузка товаров из Excel</b>\n\n"
         "Пожалуйста, отправьте Excel файл с товарами.\n\n"
         "<b>Требуемые колонки:</b>\n"
-        "• <b>name</b> (обязательно)\n"
-        "• <b>price</b> (обязательно)\n"
-        "• <b>description</b>\n"
-        "• <b>image_url</b>\n"
-        "• <b>is_available</b>\n"
-        "• <b>sizes</b>\n"
-        "• <b>colors</b>\n\n"
-        "📝 <i>Если указан id — товар будет обновлён.</i>\n"
-        "<i>Для отмены нажмите кнопку «Назад»</i>",
+        ,
         reply_markup=catalog_manage(include_cancel=True),
         parse_mode=ParseMode.HTML
     )

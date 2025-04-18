@@ -19,6 +19,7 @@ from app.handlers.orders import order_router
 from app.handlers.user_manage import user_manage_router
 from app.handlers.anon_questions import anon_questions_router
 from app.handlers.catalog_manage import catalog_manage_router
+from app.handlers.cart import cart_router
 
 async def on_startup(dispatcher: Dispatcher):
     print("✅ Бот запущен")
@@ -44,6 +45,7 @@ async def main():
     dp.include_routers(
         main_menu_router,
         catalog_router,
+        cart_router,
         order_router,
         user_manage_router,
         anon_questions_router,

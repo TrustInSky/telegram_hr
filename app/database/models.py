@@ -1,5 +1,5 @@
 from sqlalchemy.orm import declarative_base, relationship
-from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Text, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, Text, DateTime, Float
 from datetime import date, datetime
 
 Base = declarative_base()
@@ -38,7 +38,7 @@ class CartItem(Base):
     __tablename__ = "cart_items"
     id = Column(Integer, primary_key=True, autoincrement=True)
     cart_id = Column(Integer, ForeignKey("carts.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("catalog.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
     quantity = Column(Integer, default=1, nullable=False)
     size = Column(String, nullable=True)
     color = Column(String, nullable=True)
@@ -55,7 +55,7 @@ class TPointsTransaction(Base):
     amount = Column(Integer, nullable=False)
     transaction_date = Column(Date, default=date.today)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=True)
-    product_id = Column(Integer, ForeignKey("catalog.id"), nullable=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
     comment = Column(Text, nullable=True)
 
     product = relationship("Product", back_populates="tpoints")
@@ -70,7 +70,7 @@ class CommonImage(Base):
     
 
 class Product(Base):
-    __tablename__ = "catalog"
+    __tablename__ = "products"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
@@ -88,27 +88,33 @@ class Product(Base):
 
 class Order(Base):
     __tablename__ = "orders"
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.telegram_id"), nullable=False)
-    status = Column(String, default="pending")
-    order_date = Column(DateTime, default=datetime.now)
-    total_price = Column(Integer, nullable=False)
-
+    total_cost = Column(Float, nullable=False)
+    status = Column(String, nullable=False, default="pending")
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, onupdate=datetime.now)
+    
+    # Отношения
     user = relationship("User", back_populates="orders")
-    items = relationship("OrderItem", back_populates="order")
+    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
     transactions = relationship("TPointsTransaction", back_populates="order")
-
 
 class OrderItem(Base):
     __tablename__ = "order_items"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
-    product_id = Column(Integer, ForeignKey("catalog.id"), nullable=False)
-    quantity = Column(Integer, default=1, nullable=False)
-    price_at_purchase = Column(Integer, nullable=False)
     
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+    price = Column(Float, nullable=False)
+    size = Column(String, nullable=True)
+    color = Column(String, nullable=True)
+    
+    # Отношения
     order = relationship("Order", back_populates="items")
-    product = relationship("Product", back_populates="order_items")
+    product = relationship("Product")
 
 
 class AnonymousQuestion(Base):

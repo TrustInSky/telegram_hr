@@ -5,7 +5,7 @@ from app.services.order_service import OrderService
 from app.repositories.order_repo import OrderRepo
 from app.services.user_service import UserService
 from app.repositories.user_repo import UserRepo
-from app.keyboards.catalog_keyboard import buy_product_keyboard
+from app.keyboards.catalog_keyboard import buy_options_keyboard
 from app.database.models import Product
 from app.utils.message_editor import update_message
 from aiogram.enums.parse_mode import ParseMode
